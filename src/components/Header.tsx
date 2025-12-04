@@ -2,10 +2,9 @@ import { Menu, User } from "lucide-react";
 
 interface HeaderProps {
   onMenuClick: () => void;
-  menuOpen: boolean;
 }
 
-export function Header({ onMenuClick, menuOpen }: HeaderProps) {
+export function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-6 md:px-8 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <button

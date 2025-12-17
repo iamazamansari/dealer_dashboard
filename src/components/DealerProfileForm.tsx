@@ -1,6 +1,8 @@
 import type React from "react";
 
 import { useState } from "react";
+import { AddressAutocomplete } from "./Address-autocomplete";
+import { ProviderBadge } from "./ProviderBadge";
 
 interface FormData {
   name: string;
@@ -8,6 +10,9 @@ interface FormData {
   email: string;
   phone: string;
   operatingHours: string;
+  lat?: number;
+  lng?: number;
+  placeId?: string;
 }
 
 interface Errors {
@@ -70,6 +75,19 @@ export function DealerProfileForm({ onSubmit }: DealerProfileFormProps) {
     setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
+  const handleAddressChange = (value: string, placeDetails?: { lat?: number; lng?: number; placeId?: string }) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: value,
+      lat: placeDetails?.lat,
+      lng: placeDetails?.lng,
+      placeId: placeDetails?.placeId,
+    }));
+    if (touched.address) {
+      setErrors((prev) => ({ ...prev, address: "" }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
@@ -116,22 +134,16 @@ export function DealerProfileForm({ onSubmit }: DealerProfileFormProps) {
         )}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Address *
+      <div className="mb-2">
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-2">
+          Address * <span><ProviderBadge provider="openstreetmap" /></span>
         </label>
-        <input
-          type="text"
-          name="address"
+        <AddressAutocomplete
           value={formData.address}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="Enter dealer address"
-          className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors ${
-            errors.address
-              ? "border-red-500"
-              : "border-gray-300 dark:border-gray-600"
-          }`}
+          onChange={handleAddressChange}
+          onBlur={() => setTouched((prev) => ({ ...prev, address: true }))}
+          error={errors.address}
+          placeholder="Start typing to search address..."
         />
         {errors.address && (
           <p className="text-red-500 text-sm mt-1">{errors.address}</p>

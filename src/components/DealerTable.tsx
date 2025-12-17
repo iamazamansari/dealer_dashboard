@@ -1,17 +1,7 @@
 import { useState } from "react";
 import { Eye, Edit2 } from "lucide-react";
-import { DealerModal } from "./DealerModal";
-
-interface Dealer {
-  id: string;
-  name: string;
-  location: string;
-  contact: string;
-  status: "active" | "inactive" | "pending";
-  email?: string;
-  address?: string;
-  operatingHours?: string;
-}
+import { DealerModal } from "../components/DealerModal";
+import type { Dealer } from "../types/dealer";
 
 interface DealerTableProps {
   sortBy: "name" | "default";
@@ -19,122 +9,126 @@ interface DealerTableProps {
   searchQuery: string;
   currentPage: number;
   onPageChange: (page: number) => void;
+  externalDealers?: Dealer[];
+  nearCoordinates?: { lat: number; lng: number } | null;
+  nearRadiusKm?: number;
 }
 
 const initialDealers: Dealer[] = [
   {
-    id: "1",
+    id: 1,
     name: "Premium Motors",
     location: "New York, NY",
     contact: "(555) 123-4567",
-    status: "active",
+    status: "Active",
     email: "info@premiummotors.com",
   },
   {
-    id: "2",
+    id: 2,
     name: "City Auto Sales",
     location: "Los Angeles, CA",
     contact: "(555) 987-6543",
-    status: "active",
+    status: "Active",
     email: "sales@cityauto.com",
   },
   {
-    id: "3",
+    id: 3,
     name: "Highway Imports",
     location: "Chicago, IL",
     contact: "(555) 456-7890",
-    status: "inactive",
+    status: "Inactive",
   },
   {
-    id: "4",
+    id: 4,
     name: "Elite Dealerships",
     location: "Houston, TX",
     contact: "(555) 321-0987",
-    status: "pending",
+    status: "Pending",
   },
   {
-    id: "5",
+    id: 5,
     name: "Auto Express",
     location: "Phoenix, AZ",
     contact: "(555) 654-3210",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "6",
+    id: 6,
     name: "Sunset Automotive",
     location: "San Diego, CA",
     contact: "(555) 111-2222",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "7",
+    id: 7,
     name: "North Star Motors",
     location: "Dallas, TX",
     contact: "(555) 333-4444",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "8",
+    id: 8,
     name: "Mountain View Auto",
     location: "San Jose, CA",
     contact: "(555) 555-6666",
-    status: "inactive",
+    status: "Inactive",
   },
   {
-    id: "9",
+    id: 9,
     name: "Liberty Car Sales",
     location: "Austin, TX",
     contact: "(555) 777-8888",
-    status: "pending",
+    status: "Pending",
   },
   {
-    id: "10",
+    id: 10,
     name: "Golden State Motors",
     location: "San Francisco, CA",
     contact: "(555) 999-0000",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "11",
+    id: 11,
     name: "Tech Valley Autos",
     location: "Seattle, WA",
     contact: "(555) 111-3333",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "12",
+    id: 12,
     name: "Metro Auto Group",
     location: "Boston, MA",
     contact: "(555) 222-4444",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "13",
+    id: 13,
     name: "Riverside Dealers",
     location: "Miami, FL",
     contact: "(555) 333-5555",
-    status: "inactive",
+    status: "Inactive",
   },
   {
-    id: "14",
+    id: 14,
     name: "Crown Automotive",
     location: "Denver, CO",
     contact: "(555) 444-6666",
-    status: "active",
+    status: "Active",
   },
   {
-    id: "15",
+    id: 15,
     name: "Westside Motors",
     location: "Portland, OR",
     contact: "(555) 555-7777",
-    status: "pending",
+    status: "Pending",
   },
 ];
 
 const ITEMS_PER_PAGE = 10;
 
 const getStatusColor = (status: string) => {
-  switch (status) {
+  const statusLower = status.toLowerCase();
+  switch (statusLower) {
     case "active":
       return "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200";
     case "inactive":
@@ -152,8 +146,11 @@ export function DealerTable({
   searchQuery,
   currentPage,
   onPageChange,
+  externalDealers,
+  nearCoordinates,
+  nearRadiusKm,
 }: DealerTableProps) {
-  const [dealers, setDealers] = useState<Dealer[]>(initialDealers);
+  const [dealers, setDealers] = useState<Dealer[]>(externalDealers ?? initialDealers);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
@@ -188,11 +185,34 @@ export function DealerTable({
   }
 
   if (filterStatus !== "all") {
-    filteredDealers = filteredDealers.filter((d) => d.status === filterStatus);
+    filteredDealers = filteredDealers.filter(
+      (d) => d.status.toLowerCase() === filterStatus.toLowerCase()
+    );
   }
 
   if (sortBy === "name") {
     filteredDealers.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  // If a coordinate filter is provided, filter dealers by distance to the point
+  if (nearCoordinates) {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+      const R = 6371; // Earth radius in km
+      const dLat = toRad(b.lat - a.lat);
+      const dLon = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const hav = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+      const c = 2 * Math.atan2(Math.sqrt(hav), Math.sqrt(1 - hav));
+      return R * c;
+    };
+
+    const radius = nearRadiusKm ?? 50;
+    filteredDealers = filteredDealers.filter((d) => {
+      if (typeof d.lat !== "number" || typeof d.lng !== "number") return false;
+      return distanceKm({ lat: d.lat!, lng: d.lng! }, nearCoordinates) <= radius;
+    });
   }
 
   const totalPages = Math.ceil(filteredDealers.length / ITEMS_PER_PAGE);
@@ -246,8 +266,7 @@ export function DealerTable({
                           dealer.status
                         )}`}
                       >
-                        {dealer.status.charAt(0).toUpperCase() +
-                          dealer.status.slice(1)}
+                        {dealer.status}
                       </span>
                     </td>
                     <td className="px-6 py-3">

@@ -3,12 +3,16 @@ import { Layout } from "../components/Layout";
 import { DealerProfileForm } from "../components/DealerProfileForm";
 import { ProfilePreview } from "../components/ProfilePreview";
 
+
 interface DealerData {
   name: string;
   address: string;
   email: string;
   phone: string;
   operatingHours: string;
+  lat?: number;
+  lng?: number;
+  placeId?: string;
 }
 
 export default function DealerProfile() {
@@ -22,9 +26,11 @@ export default function DealerProfile() {
             Dealer Profile
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Create or update dealer information
+            Create or update dealer information with verified addresses
           </p>
         </div>
+
+        {/* <SetupInstructions /> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <DealerProfileForm onSubmit={setSubmittedData} />

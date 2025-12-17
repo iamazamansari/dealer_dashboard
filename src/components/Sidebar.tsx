@@ -14,6 +14,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const menuItems = [
     { href: "/", label: "Dashboard", icon: "📊" },
     { href: "/dealer-profile", label: "Dealer Profile", icon: "👤" },
+    { href: "/api-test", label: "API Test", icon: "🔧" },
   ];
 
   return (

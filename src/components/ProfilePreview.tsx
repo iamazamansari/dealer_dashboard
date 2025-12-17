@@ -1,4 +1,5 @@
-import { Mail, Phone, MapPin, Clock, CheckCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, CheckCircle, Globe } from "lucide-react";
+import { ProviderBadge } from "./ProviderBadge";
 
 interface PreviewProps {
   data: {
@@ -7,6 +8,9 @@ interface PreviewProps {
     email: string;
     phone: string;
     operatingHours: string;
+    lat?: number;
+    lng?: number;
+    placeId?: string;
   };
 }
 
@@ -32,9 +36,17 @@ export function ProfilePreview({ data }: PreviewProps) {
 
         <div className="flex items-start gap-3">
           <MapPin className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Address</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Address</p>
+              <span><ProviderBadge provider="openstreetmap" /></span>
+            </div>
             <p className="text-gray-900 dark:text-white">{data.address}</p>
+            {data.lat && data.lng && (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                ✓ Verified Location: {data.lat.toFixed(6)}, {data.lng.toFixed(6)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -75,6 +87,25 @@ export function ProfilePreview({ data }: PreviewProps) {
             </p>
           </div>
         </div>
+
+        {data.lat && data.lng && (
+          <div className="flex items-center gap-3">
+            <Globe className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                View on Map
+              </p>
+              <a
+                href={`https://www.openstreetmap.org/?mlat=${data.lat}&mlon=${data.lng}#map=18/${data.lat}/${data.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-600 dark:text-purple-400 hover:underline inline-flex items-center gap-1"
+              >
+                Open in OpenStreetMap
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="pt-4 border-t border-purple-200 dark:border-purple-800">
